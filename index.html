@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServiçosExpress - Conectando Profissionais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --dark: #34495e;
+            --light: #ecf0f1;
+            --accent: #e74c3c;
+            --gray: #95a5a6;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            padding-bottom: 70px;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 15px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-icons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-icons i {
+            font-size: 1.2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            width: auto;
+            display: inline-block;
+            margin: 5px;
+        }
+        
+        .service-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .service-price {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .service-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background-color: #ffeaa7;
+            color: #d35400;
+        }
+        
+        .status-progress {
+            background-color: #81ecec;
+            color: #00cec9;
+        }
+        
+        .status-completed {
+            background-color: #55efc4;
+            color: #00b894;
+        }
+        
+        .status-cancelled {
+            background-color: #fab1a0;
+            color: #d63031;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .wallet-balance {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .payment-method {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-method:hover {
+            border-color: var(--primary);
+        }
+        
+        .payment-method.active {
+            border-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .payment-method i {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+        
+        .service-type {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .service-type-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #ddd;
+        }
+        
+        .service-type-btn:hover {
+            border-color: var(--primary);
+        }
+        
+        .service-type-btn.active {
+            border-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .service-type-btn i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .rating i {
+            color: #f1c40f;
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .transaction-details {
+            flex: 1;
+        }
+        
+        .transaction-amount {
+            font-weight: bold;
+        }
+        
+        .positive {
+            color: var(--secondary);
+        }
+        
+        .negative {
+            color: var(--accent);
+        }
+        
+        .service-tag {
+            background-color: #eee;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .map-container {
+            height: 200px;
+            background-color: #eee;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+        
+        .pix-code {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .auth-tab.active {
+            border-bottom: 2px solid var(--primary);
+            font-weight: bold;
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .error-message {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            background-color: var(--secondary);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .notification-item.unread {
+            background-color: #e3f2fd;
+        }
+        
+        .service-action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        #map {
+            height: 100%;
+            border-radius: 8px;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        
+        .chat-input button {
+            padding: 10px 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+        }
+        
+        .message.sent {
+            background-color: var(--primary);
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message.received {
+            background-color: #e3e3e3;
+            color: #333;
+        }
+        
+        .review-form {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .stars {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .star {
+            color: #ddd;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .star.active {
+            color: #f1c40f;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Autenticação -->
+    <div id="auth-screen">
+        <div class="auth-container">
+            <div class="logo" style="justify-content: center; margin-bottom: 30px;">
+                <i class="fas fa-hands-helping"></i>
+                <span>ServiçosExpress</span>
+            </div>
+            
+            <div class="success-message" id="register-success">
+                Cadastro realizado com sucesso! Faça login para continuar.
+            </div>
+            
+            <div class="card">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-form="login">Entrar</div>
+                    <div class="auth-tab" data-form="register">Cadastrar</div>
+                </div>
+                
+                <form id="login-form" class="auth-form active">
+                    <div class="form-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" class="form-control" placeholder="Seu e-mail">
+                        <div class="error-message" id="login-email-error">Por favor, insira um e-mail válido</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Senha</label>
+                        <input type="password" id="login-password" class="form-control" placeholder="Sua senha">
+                        <div class="error-message" id="login-password-error">Por favor, insira sua senha</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="login-btn">Entrar</button>
+                </form>
+                
+                <form id="register-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="register-name">Nome completo</label>
+                        <input type="text" id="register-name" class="form-control" placeholder="Seu nome completo">
+                        <div class="error-message" id="register-name-error">Por favor, insira seu nome completo</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">E-mail</label>
+                        <input type="email" id="register-email" class="form-control" placeholder="Seu e-mail">
+                        <div class="error-message" id="register-email-error">Por favor, insira um e-mail válido</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Senha</label>
+                        <input type="password" id="register-password" class="form-control" placeholder="Crie uma senha">
+                        <div class="error-message" id="register-password-error">A senha deve ter pelo menos 6 caracteres</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-phone">Telefone</label>
+                        <input type="tel" id="register-phone" class="form-control" placeholder="Seu telefone">
+                        <div class="error-message" id="register-phone-error">Por favor, insira um telefone válido</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-type">Tipo de usuário</label>
+                        <select id="user-type" class="form-control">
+                            <option value="client">Quero contratar serviços</option>
+                            <option value="provider">Quero oferecer serviços</option>
+                            <option value="both">Quero ambos</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="register-btn">Cadastrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicativo Principal (inicialmente oculto) -->
+    <div id="app-screen" style="display: none;">
+        <header>
+            <div class="logo">
+                <i class="fas fa-hands-helping"></i>
+                <span>ServiçosExpress</span>
+            </div>
+            <div class="nav-icons">
+                <div style="position: relative;">
+                    <i class="fas fa-bell" id="notifications-btn"></i>
+                    <div class="notification-badge" id="notification-count">3</div>
+                </div>
+                <i class="fas fa-user" id="profile-btn"></i>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Tela Principal -->
+            <div class="wallet-balance">
+                <div>Saldo disponível</div>
+                <div class="balance-amount" id="user-balance">R$ 0,00</div>
+                <div>
+                    <button class="btn btn-outline" id="add-funds-btn">Adicionar Fundos</button>
+                    <button class="btn btn-outline" id="withdraw-btn" style="margin-top: 10px;">Sacar Dinheiro</button>
+                </div>
+            </div>
+
+            <div class="tab-container" id="main-tabs">
+                <div class="tab active" data-tab="available">Serviços Disponíveis</div>
+                <div class="tab" data-tab="requested">Serviços Solicitados</div>
+                <div class="tab" data-tab="my-services">Meus Serviços</div>
+                <div class="tab" data-tab="history">Histórico</div>
+            </div>
+
+            <div class="service-list" id="available-services">
+                <!-- Serviços serão carregados aqui -->
+            </div>
+
+            <div id="no-services-message" class="card" style="text-align: center; display: none;">
+                <i class="fas fa-search" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i>
+                <h3>Nenhum serviço disponível</h3>
+                <p>No momento não há serviços que correspondam aos seus critérios.</p>
+            </div>
+
+            <button class="btn btn-secondary" id="request-service-btn"><i class="fas fa-plus"></i> Solicitar um Serviço</button>
+        </div>
+
+        <!-- Modal para solicitar serviço -->
+        <div class="modal" id="request-service-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 style="margin-bottom: 20px;">Solicitar Serviço</h2>
+                
+                <div class="service-type">
+                    <div class="service-type-btn active" data-type="installation">
+                        <i class="fas fa-tv"></i>
+                        <div>Instalação</div>
+                    </div>
+                    <div class="service-type-btn" data-type="assembly">
+                        <i class="fas fa-couch"></i>
+                        <div>Montagem</div>
+                    </div>
+                    <div class="service-type-btn" data-type="repair">
+                        <i class="fas fa-tools"></i>
+                        <div>Reparo</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="service-title">Título do Serviço</label>
+                    <input type="text" id="service-title" class="form-control" placeholder="Ex: Instalação de TV">
+                </div>
+                <div class="form-group">
+                    <label for="service-description">Descrição</label>
+                    <textarea id="service-description" class="form-control" rows="3" placeholder="Descreva detalhadamente o serviço necessário"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="service-date">Data e Hora</label>
+                    <input type="datetime-local" id="service-date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="service-location">Localização</label>
+                    <input type="text" id="service-location" class="form-control" placeholder="Endereço completo">
+                    <div class="map-container" id="location-map">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Selecionar no mapa</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="service-value">Valor oferecido (R$)</label>
+                    <input type="number" id="service-value" class="form-control" placeholder="100,00">
+                    <small style="color: #666;">Lembre-se: 10% será destinado à plataforma</small>
+                </div>
+                <button class="btn btn-primary" id="publish-service-btn">Publicar Serviço</button>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar fundos -->
+        <div class="modal" id="add-funds-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 style="margin-bottom: 20px;">Adicionar Fundos</h2>
+                
+                <div class="form-group">
+                    <label for="amount">Valor (R$)</label>
+                    <input type="number" id="amount" class="form-control" placeholder="100,00">
+                </div>
+                
+                <div class="payment-methods">
+                    <div class="payment-method active" data-method="pix">
+                        <i class="fab fa-pix"></i>
+                        <div>PIX</div>
+                    </div>
+                    <div class="payment-method" data-method="card">
+                        <i class="fas fa-credit-card"></i>
+                        <div>Cartão</div>
+                    </div>
+                </div>
+                
+                <div id="pix-payment">
+                    <div class="pix-code" id="pix-code">
+                        00020126580014br.gov.bcb.pix0136c8e35b2d-8043-4c69-9191-a35d689c8c995204000053039865802BR5913ServicosExpress6008Sao Paulo62290525mpqr12345678901234963041A3D
+                    </div>
+                    <p style="text-align: center; font-size: 0.9rem;">Escaneie o QR code ou copie o código PIX para pagamento</p>
+                    <button class="btn btn-outline" id="copy-pix-btn">
+                        <i class="fas fa-copy"></i> Copiar Código PIX
+                    </button>
+                </div>
+                
+                <div id="card-payment" style="display: none;">
+                    <div class="card-form">
+                        <div class="form-group">
+                            <label for="card-number">Número do cartão</label>
+                            <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="card-expiry">Validade</label>
+                                <input type="text" id="card-expiry" class="form-control" placeholder="MM/AA">
+                            </div>
+                            <div class="form-group">
+                                <label for="card-cvv">CVV</label>
+                                <input type="text" id="card-cvv" class="form-control" placeholder="123">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="card-name">Nome no cartão</label>
+                            <input type="text" id="card-name" class="form-control" placeholder="João Silva">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="confirm-payment-btn">Confirmar Pagamento</button>
+            </div>
+        </div>
+
+        <!-- Modal para sacar dinheiro -->
+        <div class="modal" id="withdraw-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 style="margin-bottom: 20px;">Sacar Dinheiro</h2>
+                
+                <div class="form-group">
+                    <label for="withdraw-amount">Valor para sacar (R$)</label>
+                    <input type="number" id="withdraw-amount" class="form-control" placeholder="100,00">
+                    <small>Saldo disponível: <span id="available-balance">R$ 0,00</span></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="withdraw-method">Método de saque</label>
+                    <select id="withdraw-method" class="form-control">
+                        <option value="pix">PIX</option>
+                        <option value="bank-account">Conta Bancária</option>
+                    </select>
+                </div>
+                
+                <div id="pix-withdrawal">
+                    <div class="form-group">
+                        <label for="pix-key">Chave PIX</label>
+                        <input type="text" id="pix-key" class="form-control" placeholder="Sua chave PIX">
+                    </div>
+                </div>
+                
+                <div id="bank-withdrawal" style="display: none;">
+                    <div class="form-group">
+                        <label for="bank-name">Banco</label>
+                        <input type="text" id="bank-name" class="form-control" placeholder="Nome do banco">
+                    </div>
+                    <div class="form-group">
+                        <label for="account-type">Tipo de conta</label>
+                        <select id="account-type" class="form-control">
+                            <option value="checking">Conta Corrente</option>
+                            <option value="savings">Conta Poupança</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="account-number">Número da conta</label>
+                            <input type="text" id="account-number" class="form-control" placeholder="Número da conta">
+                        </div>
+                        <div class="form-group">
+                            <label for="agency-number">Agência</label>
+                            <input type="text" id="agency-number" class="form-control" placeholder="Agência">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="confirm-withdraw-btn">Solicitar Saque</button>
+            </div>
+        </div>
+
+        <!-- Modal de perfil -->
+        <div class="modal" id="profile-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                
+                <div class="profile-header">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div>
+                        <h2 id="profile-name">Usuário</h2>
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                            <span>4.5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-container" id="profile-tabs">
+                    <div class="tab active" data-tab="profile-transactions">Minhas Transações</div>
+                    <div class="tab" data-tab="profile-data">Meus Dados</div>
+                    <div class="tab" data-tab="profile-reviews">Avaliações</div>
+                </div>
+                
+                <div id="profile-transactions" class="profile-tab-content">
+                    <div class="transaction-list">
+                        <!-- Transações serão carregadas aqui -->
+                    </div>
+                </div>
+                
+                <div id="profile-data" class="profile-tab-content" style="display: none;">
+                    <div class="form-group">
+                        <label for="profile-name-input">Nome completo</label>
+                        <input type="text" id="profile-name-input" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-email">E-mail</label>
+                        <input type="email" id="profile-email" class="form-control" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-phone">Telefone</label>
+                        <input type="tel" id="profile-phone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-user-type">Tipo de usuário</label>
+                        <select id="profile-user-type" class="form-control">
+                            <option value="client">Cliente</option>
+                            <option value="provider">Prestador</option>
+                            <option value="both">Ambos</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="save-profile-btn">Salvar Alterações</button>
+                </div>
+                
+                <div id="profile-reviews" class="profile-tab-content" style="display: none;">
+                    <div class="reviews-list">
+                        <!-- Avaliações serão carregadas aqui -->
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline" style="margin-top: 20px;" id="logout-btn">Sair</button>
+            </div>
+        </div>
+
+        <!-- Modal de notificações -->
+        <div class="modal" id="notifications-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 style="margin-bottom: 20px;">Notificações</h2>
+                
+                <div class="notifications-list">
+                    <!-- Notificações serão carregadas aqui -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de detalhes do serviço -->
+        <div class="modal" id="service-detail-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <div id="service-detail-content">
+                    <!-- Conteúdo do serviço será carregado aqui -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de chat -->
+        <div class="modal" id="chat-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 id="chat-title" style="margin-bottom: 20px;">Chat com Usuário</h2>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Mensagens serão carregadas aqui -->
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chat-input" placeholder="Digite sua mensagem...">
+                        <button id="send-message-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de avaliação -->
+        <div class="modal" id="review-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 style="margin-bottom: 20px;">Avaliar Serviço</h2>
+                
+                <div class="form-group">
+                    <label>Avaliação</label>
+                    <div class="stars">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="review-comment">Comentário (opcional)</label>
+                    <textarea id="review-comment" class="form-control" rows="3" placeholder="Conte como foi sua experiência"></textarea>
+                </div>
+                
+                <button class="btn btn-primary" id="submit-review-btn">Enviar Avaliação</button>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </div>
+            <div class="nav-item" data-page="search">
+                <i class="fas fa-search"></i>
+                <span>Buscar</span>
+            </div>
+            <div class="nav-item" data-page="wallet">
+                <i class="fas fa-wallet"></i>
+                <span>Carteira</span>
+            </div>
+            <div class="nav-item" data-page="services">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Serviços</span>
+            </div>
+            <div class="nav-item" data-page="profile">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Dados de usuários (simulando banco de dados)
+        const users = JSON.parse(localStorage.getItem('servicosExpressUsers')) || [];
+        const services = JSON.parse(localStorage.getItem('servicosExpressServices')) || [];
+        const transactions = JSON.parse(localStorage.getItem('servicosExpressTransactions')) || [];
+        const notifications = JSON.parse(localStorage.getItem('servicosExpressNotifications')) || [];
+        const chats = JSON.parse(localStorage.getItem('servicosExpressChats')) || [];
+        const reviews = JSON.parse(localStorage.getItem('servicosExpressReviews')) || [];
+        
+        let currentUser = JSON.parse(localStorage.getItem('servicosExpressCurrentUser')) || null;
+        let currentService = null;
+        let currentChat = null;
+        
+        // Elementos da interface
+        const authScreen = document.getElementById('auth-screen');
+        const appScreen = document.getElementById('app-screen');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const profileBtn = document.getElementById('profile-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userAvatar = document.getElementById('user-avatar');
+        const profileName = document.getElementById('profile-name');
+        const registerSuccess = document.getElementById('register-success');
+        const userBalance = document.getElementById('user-balance');
+        const availableBalance = document.getElementById('available-balance');
+        const notificationCount = document.getElementById('notification-count');
+        
+        // Inicializar dados de exemplo se não existirem
+        function initializeSampleData() {
+            if (users.length === 0) {
+                // Criar alguns usuários de exemplo
+                const sampleUsers = [
+                    {
+                        id: '1',
+                        name: 'João Silva',
+                        email: 'joao@email.com',
+                        password: '123456',
+                        phone: '(11) 99999-9999',
+                        userType: 'both',
+                        balance: 350,
+                        createdAt: new Date().toISOString(),
+                        rating: 4.5
+                    },
+                    {
+                        id: '2',
+                        name: 'Maria Santos',
+                        email: 'maria@email.com',
+                        password: '123456',
+                        phone: '(11) 98888-8888',
+                        userType: 'provider',
+                        balance: 1200,
+                        createdAt: new Date().toISOString(),
+                        rating: 4.8
+                    },
+                    {
+                        id: '3',
+                        name: 'Pedro Almeida',
+                        email: 'pedro@email.com',
+                        password: '123456',
+                        phone: '(11) 97777-7777',
+                        userType: 'client',
+                        balance: 500,
+                        createdAt: new Date().toISOString(),
+                        rating: 4.2
+                    }
+                ];
+                
+                sampleUsers.forEach(user => users.push(user));
+                localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+            }
+            
+            if (services.length === 0) {
+                // Criar alguns serviços de exemplo
+                const sampleServices = [
+                    {
+                        id: '1',
+                        title: 'Instalação de TV 55"',
+                        description: 'Preciso de ajuda para instalar minha TV na parede da sala.',
+                        category: 'installation',
+                        date: '2023-08-15T14:00',
+                        location: 'São Paulo, SP',
+                        value: 120,
+                        clientId: '3',
+                        providerId: null,
+                        status: 'available',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        title: 'Montagem de Armário',
+                        description: 'Preciso montar um armário novo que comprei na IKEA.',
+                        category: 'assembly',
+                        date: '2023-08-17T10:00',
+                        location: 'Rio de Janeiro, RJ',
+                        value: 200,
+                        clientId: '3',
+                        providerId: null,
+                        status: 'available',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: '3',
+                        title: 'Reparo na Janela',
+                        description: 'Janela do quarto quebrou e preciso trocar o vidro.',
+                        category: 'repair',
+                        date: '2023-08-20T13:30',
+                        location: 'Belo Horizonte, MG',
+                        value: 150,
+                        clientId: '1',
+                        providerId: '2',
+                        status: 'in_progress',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                
+                sampleServices.forEach(service => services.push(service));
+                localStorage.setItem('servicosExpressServices', JSON.stringify(services));
+            }
+            
+            if (transactions.length === 0) {
+                // Criar algumas transações de exemplo
+                const sampleTransactions = [
+                    {
+                        id: '1',
+                        userId: '2',
+                        type: 'credit',
+                        amount: 108,
+                        description: 'Instalação de TV',
+                        date: '2023-08-10T14:30:00',
+                        serviceId: '1'
+                    },
+                    {
+                        id: '2',
+                        userId: 'platform',
+                        type: 'fee',
+                        amount: 12,
+                        description: 'Taxa de serviço - Instalação de TV',
+                        date: '2023-08-10T14:30:00',
+                        serviceId: '1'
+                    },
+                    {
+                        id: '3',
+                        userId: '2',
+                        type: 'credit',
+                        amount: 180,
+                        description: 'Montagem de Armário',
+                        date: '2023-08-05T11:15:00',
+                        serviceId: '2'
+                    },
+                    {
+                        id: '4',
+                        userId: 'platform',
+                        type: 'fee',
+                        amount: 20,
+                        description: 'Taxa de serviço - Montagem de Armário',
+                        date: '2023-08-05T11:15:00',
+                        serviceId: '2'
+                    }
+                ];
+                
+                sampleTransactions.forEach(transaction => transactions.push(transaction));
+                localStorage.setItem('servicosExpressTransactions', JSON.stringify(transactions));
+            }
+            
+            if (notifications.length === 0) {
+                // Criar algumas notificações de exemplo
+                const sampleNotifications = [
+                    {
+                        id: '1',
+                        userId: '2',
+                        title: 'Novo serviço disponível',
+                        message: 'Há um novo serviço de Instalação de TV na sua região.',
+                        type: 'info',
+                        read: false,
+                        date: new Date().toISOString()
+                    },
+                    {
+                        id: '2',
+                        userId: '2',
+                        title: 'Serviço aceito',
+                        message: 'Você aceitou o serviço de Reparo na Janela.',
+                        type: 'success',
+                        read: true,
+                        date: new Date(Date.now() - 3600000).toISOString()
+                    },
+                    {
+                        id: '3',
+                        userId: '2',
+                        title: 'Pagamento recebido',
+                        message: 'Você recebeu R$ 108,00 pela Instalação de TV.',
+                        type: 'success',
+                        read: false,
+                        date: new Date(Date.now() - 86400000).toISOString()
+                    }
+                ];
+                
+                sampleNotifications.forEach(notification => notifications.push(notification));
+                localStorage.setItem('servicosExpressNotifications', JSON.stringify(notifications));
+            }
+        }
+        
+        // Verificar se já existe um usuário logado
+        if (currentUser) {
+            showAppScreen();
+        }
+        
+        // Inicializar dados de exemplo
+        initializeSampleData();
+        
+        // Alternar entre abas de login e cadastro
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const formId = tab.getAttribute('data-form');
+                
+                // Ativar aba clicada
+                authTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Mostrar formulário correspondente
+                document.querySelectorAll('.auth-form').forEach(form => {
+                    form.classList.remove('active');
+                });
+                document.getElementById(`${formId}-form`).classList.add('active');
+            });
+        });
+        
+        // Função para validar e-mail
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        // Função para mostrar mensagens de erro
+        function showError(inputId, messageId) {
+            document.getElementById(inputId).style.borderColor = 'var(--accent)';
+            document.getElementById(messageId).style.display = 'block';
+        }
+        
+        // Função para limpar erros
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.style.borderColor = '#ddd';
+            });
+        }
+        
+        // Função para mostrar a tela do aplicativo
+        function showAppScreen() {
+            authScreen.style.display = 'none';
+            appScreen.style.display = 'block';
+            
+            // Atualizar informações do usuário
+            if (currentUser) {
+                userAvatar.textContent = currentUser.name.charAt(0);
+                profileName.textContent = currentUser.name;
+                userBalance.textContent = `R$ ${currentUser.balance.toFixed(2)}`;
+                availableBalance.textContent = `R$ ${currentUser.balance.toFixed(2)}`;
+                
+                // Carregar serviços
+                loadServices();
+                
+                // Carregar notificações
+                loadNotifications();
+                
+                // Carregar transações
+                loadTransactions();
+            }
+        }
+        
+        // Processar cadastro de novo usuário
+        registerBtn.addEventListener('click', () => {
+            clearErrors();
+            
+            const name = document.getElementById('register-name').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const phone = document.getElementById('register-phone').value.trim();
+            const userType = document.getElementById('user-type').value;
+            
+            let isValid = true;
+            
+            // Validações
+            if (name.length < 3) {
+                showError('register-name', 'register-name-error');
+                isValid = false;
+            }
+            
+            if (!isValidEmail(email)) {
+                showError('register-email', 'register-email-error');
+                isValid = false;
+            }
+            
+            if (password.length < 6) {
+                showError('register-password', 'register-password-error');
+                isValid = false;
+            }
+            
+            if (phone.length < 10) {
+                showError('register-phone', 'register-phone-error');
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Verificar se e-mail já existe
+            if (users.some(user => user.email === email)) {
+                showError('register-email', 'register-email-error');
+                document.getElementById('register-email-error').textContent = 'Este e-mail já está cadastrado';
+                return;
+            }
+            
+            // Criar novo usuário
+            const newUser = {
+                id: Date.now().toString(),
+                name,
+                email,
+                password, // Em uma aplicação real, isso seria criptografado
+                phone,
+                userType,
+                balance: 0,
+                rating: 5,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Adicionar usuário e salvar
+            users.push(newUser);
+            localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+            
+            // Mostrar mensagem de sucesso
+            registerSuccess.style.display = 'block';
+            
+            // Limpar formulário
+            document.getElementById('register-form').reset();
+            
+            // Mudar para a aba de login
+            authTabs.forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-form="login"]').classList.add('active');
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById('login-form').classList.add('active');
+            
+            // Preencher e-mail no login
+            document.getElementById('login-email').value = email;
+        });
+        
+        // Processar login
+        loginBtn.addEventListener('click', () => {
+            clearErrors();
+            
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            let isValid = true;
+            
+            // Validações
+            if (!isValidEmail(email)) {
+                showError('login-email', 'login-email-error');
+                isValid = false;
+            }
+            
+            if (password.length === 0) {
+                showError('login-password', 'login-password-error');
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Verificar credenciais
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (!user) {
+                showError('login-email', 'login-email-error');
+                showError('login-password', 'login-password-error');
+                document.getElementById('login-email-error').textContent = 'E-mail ou senha incorretos';
+                document.getElementById('login-password-error').textContent = 'E-mail ou senha incorretos';
+                return;
+            }
+            
+            // Login bem-sucedido
+            currentUser = user;
+            localStorage.setItem('servicosExpressCurrentUser', JSON.stringify(currentUser));
+            
+            showAppScreen();
+        });
+        
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            localStorage.removeItem('servicosExpressCurrentUser');
+            authScreen.style.display = 'block';
+            appScreen.style.display = 'none';
+            document.getElementById('login-form').reset();
+            registerSuccess.style.display = 'none';
+        });
+        
+        // Abrir modal de perfil
+        profileBtn.addEventListener('click', () => {
+            // Preencher dados do perfil
+            document.getElementById('profile-name-input').value = currentUser.name;
+            document.getElementById('profile-email').value = currentUser.email;
+            document.getElementById('profile-phone').value = currentUser.phone;
+            document.getElementById('profile-user-type').value = currentUser.userType;
+            
+            document.getElementById('profile-modal').style.display = 'flex';
+        });
+        
+        // Salvar perfil
+        document.getElementById('save-profile-btn').addEventListener('click', () => {
+            const name = document.getElementById('profile-name-input').value;
+            const phone = document.getElementById('profile-phone').value;
+            const userType = document.getElementById('profile-user-type').value;
+            
+            // Atualizar usuário
+            currentUser.name = name;
+            currentUser.phone = phone;
+            currentUser.userType = userType;
+            
+            // Atualizar no "banco de dados"
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex] = currentUser;
+                localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+                localStorage.setItem('servicosExpressCurrentUser', JSON.stringify(currentUser));
+            }
+            
+            // Atualizar na interface
+            userAvatar.textContent = currentUser.name.charAt(0);
+            profileName.textContent = currentUser.name;
+            
+            alert('Perfil atualizado com sucesso!');
+        });
+        
+        // Alternar abas do perfil
+        document.querySelectorAll('#profile-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Ativar aba clicada
+                document.querySelectorAll('#profile-tabs .tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Mostrar conteúdo correspondente
+                document.querySelectorAll('.profile-tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+        
+        // Carregar serviços
+        function loadServices() {
+            const servicesList = document.getElementById('available-services');
+            servicesList.innerHTML = '';
+            
+            const activeTab = document.querySelector('#main-tabs .tab.active').getAttribute('data-tab');
+            let filteredServices = [];
+            
+            if (activeTab === 'available') {
+                filteredServices = services.filter(service => service.status === 'available');
+            } else if (activeTab === 'requested') {
+                filteredServices = services.filter(service => service.clientId === currentUser.id);
+            } else if (activeTab === 'my-services') {
+                filteredServices = services.filter(service => service.providerId === currentUser.id);
+            } else if (activeTab === 'history') {
+                filteredServices = services.filter(service => 
+                    (service.clientId === currentUser.id || service.providerId === currentUser.id) && 
+                    (service.status === 'completed' || service.status === 'cancelled')
+                );
+            }
+            
+            if (filteredServices.length === 0) {
+                document.getElementById('no-services-message').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('no-services-message').style.display = 'none';
+            
+            filteredServices.forEach(service => {
+                const client = users.find(u => u.id === service.clientId);
+                const serviceCard = document.createElement('div');
+                serviceCard.className = 'service-card card';
+                
+                let statusBadge = '';
+                if (service.status !== 'available') {
+                    const statusText = {
+                        'pending': 'Pendente',
+                        'in_progress': 'Em Andamento',
+                        'completed': 'Concluído',
+                        'cancelled': 'Cancelado'
+                    };
+                    
+                    statusBadge = `<span class="service-status status-${service.status}">${statusText[service.status]}</span>`;
+                }
+                
+                serviceCard.innerHTML = `
+                    <div class="service-header">
+                        <h3>${service.title}</h3>
+                        <div class="service-price">R$ ${service.value.toFixed(2)}</div>
+                    </div>
+                    <p>${service.description}</p>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <span><i class="fas fa-map-marker-alt"></i> ${service.location}</span>
+                        <span><i class="fas fa-calendar-alt"></i> ${formatDate(service.date)}</span>
+                    </div>
+                    <div class="service-tag">${getCategoryName(service.category)}</div>
+                    ${statusBadge}
+                    <div class="service-action-buttons">
+                        ${getServiceActions(service)}
+                    </div>
+                `;
+                
+                servicesList.appendChild(serviceCard);
+                
+                // Adicionar event listeners para os botões
+                const viewDetailsBtn = serviceCard.querySelector('.view-details-btn');
+                if (viewDetailsBtn) {
+                    viewDetailsBtn.addEventListener('click', () => showServiceDetails(service));
+                }
+                
+                const acceptServiceBtn = serviceCard.querySelector('.accept-service-btn');
+                if (acceptServiceBtn) {
+                    acceptServiceBtn.addEventListener('click', () => acceptService(service));
+                }
+                
+                const startChatBtn = serviceCard.querySelector('.start-chat-btn');
+                if (startChatBtn) {
+                    startChatBtn.addEventListener('click', () => startChat(service));
+                }
+                
+                const completeServiceBtn = serviceCard.querySelector('.complete-service-btn');
+                if (completeServiceBtn) {
+                    completeServiceBtn.addEventListener('click', () => completeService(service));
+                }
+            });
+        }
+        
+        // Obter nome da categoria
+        function getCategoryName(category) {
+            const categories = {
+                'installation': 'Instalação',
+                'assembly': 'Montagem',
+                'repair': 'Reparo'
+            };
+            
+            return categories[category] || 'Outro';
+        }
+        
+        // Obter ações para o serviço
+        function getServiceActions(service) {
+            if (service.status === 'available' && currentUser.userType !== 'client') {
+                return `
+                    <button class="btn btn-primary btn-small accept-service-btn">Aceitar Serviço</button>
+                    <button class="btn btn-outline btn-small view-details-btn">Ver Detalhes</button>
+                `;
+            } else if (service.status === 'in_progress' && service.providerId === currentUser.id) {
+                return `
+                    <button class="btn btn-primary btn-small complete-service-btn">Concluir Serviço</button>
+                    <button class="btn btn-outline btn-small start-chat-btn">Chat</button>
+                `;
+            } else if (service.status === 'in_progress' && service.clientId === currentUser.id) {
+                return `
+                    <button class="btn btn-outline btn-small start-chat-btn">Chat</button>
+                `;
+            } else {
+                return `
+                    <button class="btn btn-outline btn-small view-details-btn">Ver Detalhes</button>
+                `;
+            }
+        }
+        
+        // Formatador de data
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Aceitar serviço
+        function acceptService(service) {
+            if (currentUser.balance < service.value * 0.1) {
+                alert('Saldo insuficiente para cobrir a taxa de serviço. Adicione fundos à sua carteira.');
+                return;
+            }
+            
+            service.providerId = currentUser.id;
+            service.status = 'in_progress';
+            
+            // Cobrar taxa de 10%
+            const fee = service.value * 0.1;
+            currentUser.balance -= fee;
+            
+            // Registrar transação
+            const transaction = {
+                id: Date.now().toString(),
+                userId: 'platform',
+                type: 'fee',
+                amount: fee,
+                description: `Taxa de serviço - ${service.title}`,
+                date: new Date().toISOString(),
+                serviceId: service.id
+            };
+            
+            transactions.push(transaction);
+            
+            // Criar notificação para o cliente
+            const clientNotification = {
+                id: Date.now().toString(),
+                userId: service.clientId,
+                title: 'Serviço aceito',
+                message: `O serviço "${service.title}" foi aceito por ${currentUser.name}.`,
+                type: 'success',
+                read: false,
+                date: new Date().toISOString()
+            };
+            
+            notifications.push(clientNotification);
+            
+            // Atualizar dados
+            localStorage.setItem('servicosExpressServices', JSON.stringify(services));
+            localStorage.setItem('servicosExpressTransactions', JSON.stringify(transactions));
+            localStorage.setItem('servicosExpressNotifications', JSON.stringify(notifications));
+            localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+            localStorage.setItem('servicosExpressCurrentUser', JSON.stringify(currentUser));
+            
+            // Atualizar interface
+            userBalance.textContent = `R$ ${currentUser.balance.toFixed(2)}`;
+            
+            alert('Serviço aceito com sucesso! Uma taxa de 10% foi cobrada.');
+            loadServices();
+        }
+        
+        // Concluir serviço
+        function completeService(service) {
+            service.status = 'completed';
+            
+            // Pagar prestador (90% do valor)
+            const providerAmount = service.value * 0.9;
+            const provider = users.find(u => u.id === service.providerId);
+            provider.balance += providerAmount;
+            
+            // Registrar transação para o prestador
+            const providerTransaction = {
+                id: Date.now().toString(),
+                userId: service.providerId,
+                type: 'credit',
+                amount: providerAmount,
+                description: `Pagamento - ${service.title}`,
+                date: new Date().toISOString(),
+                serviceId: service.id
+            };
+            
+            transactions.push(providerTransaction);
+            
+            // Criar notificação para o prestador
+            const providerNotification = {
+                id: Date.now().toString(),
+                userId: service.providerId,
+                title: 'Pagamento recebido',
+                message: `Você recebeu R$ ${providerAmount.toFixed(2)} pelo serviço "${service.title}".`,
+                type: 'success',
+                read: false,
+                date: new Date().toISOString()
+            };
+            
+            notifications.push(providerNotification);
+            
+            // Criar notificação para o cliente
+            const clientNotification = {
+                id: Date.now().toString(),
+                userId: service.clientId,
+                title: 'Serviço concluído',
+                message: `O serviço "${service.title}" foi concluído por ${provider.name}.`,
+                type: 'success',
+                read: false,
+                date: new Date().toISOString()
+            };
+            
+            notifications.push(clientNotification);
+            
+            // Atualizar dados
+            localStorage.setItem('servicosExpressServices', JSON.stringify(services));
+            localStorage.setItem('servicosExpressTransactions', JSON.stringify(transactions));
+            localStorage.setItem('servicosExpressNotifications', JSON.stringify(notifications));
+            localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+            
+            alert('Serviço concluído com sucesso! O pagamento foi processado.');
+            loadServices();
+            
+            // Abrir modal de avaliação
+            setTimeout(() => {
+                document.getElementById('review-modal').style.display = 'flex';
+            }, 1000);
+        }
+        
+        // Mostrar detalhes do serviço
+        function showServiceDetails(service) {
+            const client = users.find(u => u.id === service.clientId);
+            const provider = service.providerId ? users.find(u => u.id === service.providerId) : null;
+            
+            const serviceDetailContent = document.getElementById('service-detail-content');
+            serviceDetailContent.innerHTML = `
+                <h2>${service.title}</h2>
+                <p>${service.description}</p>
+                
+                <div style="display: flex; gap: 10px; margin: 15px 0;">
+                    <span><i class="fas fa-map-marker-alt"></i> ${service.location}</span>
+                    <span><i class="fas fa-calendar-alt"></i> ${formatDate(service.date)}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                    <div>
+                        <strong>Valor:</strong> R$ ${service.value.toFixed(2)}
+                    </div>
+                    <div>
+                        <strong>Categoria:</strong> ${getCategoryName(service.category)}
+                    </div>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <strong>Cliente:</strong> ${client.name}
+                </div>
+                
+                ${provider ? `
+                <div style="margin: 15px 0;">
+                    <strong>Prestador:</strong> ${provider.name}
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                        <span>${provider.rating}</span>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div style="margin: 15px 0;">
+                    <strong>Status:</strong> 
+                    <span class="service-status status-${service.status}">
+                        ${service.status === 'available' ? 'Disponível' : 
+                          service.status === 'in_progress' ? 'Em Andamento' : 
+                          service.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                    </span>
+                </div>
+                
+                <div class="service-action-buttons">
+                    ${getServiceActions(service)}
+                </div>
+            `;
+            
+            document.getElementById('service-detail-modal').style.display = 'flex';
+            
+            // Adicionar event listeners para os botões
+            const acceptServiceBtn = serviceDetailContent.querySelector('.accept-service-btn');
+            if (acceptServiceBtn) {
+                acceptServiceBtn.addEventListener('click', () => {
+                    acceptService(service);
+                    document.getElementById('service-detail-modal').style.display = 'none';
+                });
+            }
+            
+            const startChatBtn = serviceDetailContent.querySelector('.start-chat-btn');
+            if (startChatBtn) {
+                startChatBtn.addEventListener('click', () => {
+                    startChat(service);
+                    document.getElementById('service-detail-modal').style.display = 'none';
+                });
+            }
+            
+            const completeServiceBtn = serviceDetailContent.querySelector('.complete-service-btn');
+            if (completeServiceBtn) {
+                completeServiceBtn.addEventListener('click', () => {
+                    completeService(service);
+                    document.getElementById('service-detail-modal').style.display = 'none';
+                });
+            }
+        }
+        
+        // Iniciar chat
+        function startChat(service) {
+            const otherUserId = service.clientId === currentUser.id ? service.providerId : service.clientId;
+            const otherUser = users.find(u => u.id === otherUserId);
+            
+            document.getElementById('chat-title').textContent = `Chat com ${otherUser.name}`;
+            
+            // Carregar mensagens existentes
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            
+            const serviceChats = chats.filter(chat => chat.serviceId === service.id);
+            
+            if (serviceChats.length === 0) {
+                chatMessages.innerHTML = '<p style="text-align: center; color: #999;">Nenhuma mensagem ainda. Inicie a conversa!</p>';
+            } else {
+                serviceChats.forEach(chat => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${chat.userId === currentUser.id ? 'sent' : 'received'}`;
+                    messageDiv.innerHTML = `
+                        <div>${chat.message}</div>
+                        <small>${formatDate(chat.date)}</small>
+                    `;
+                    chatMessages.appendChild(messageDiv);
+                });
+            }
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            currentService = service;
+            document.getElementById('chat-modal').style.display = 'flex';
+        }
+        
+        // Enviar mensagem
+        document.getElementById('send-message-btn').addEventListener('click', () => {
+            const messageInput = document.getElementById('chat-input');
+            const message = messageInput.value.trim();
+            
+            if (message === '') return;
+            
+            const newChat = {
+                id: Date.now().toString(),
+                serviceId: currentService.id,
+                userId: currentUser.id,
+                message: message,
+                date: new Date().toISOString()
+            };
+            
+            chats.push(newChat);
+            localStorage.setItem('servicosExpressChats', JSON.stringify(chats));
+            
+            // Adicionar mensagem à interface
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message sent';
+            messageDiv.innerHTML = `
+                <div>${message}</div>
+                <small>${formatDate(newChat.date)}</small>
+            `;
+            chatMessages.appendChild(messageDiv);
+            
+            // Limpar input e rolar para baixo
+            messageInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Criar notificação para o outro usuário
+            const otherUserId = currentService.clientId === currentUser.id ? currentService.providerId : currentService.clientId;
+            
+            const notification = {
+                id: Date.now().toString(),
+                userId: otherUserId,
+                title: 'Nova mensagem',
+                message: `Você recebeu uma nova mensagem sobre o serviço "${currentService.title}".`,
+                type: 'info',
+                read: false,
+                date: new Date().toISOString()
+            };
+            
+            notifications.push(notification);
+            localStorage.setItem('servicosExpressNotifications', JSON.stringify(notifications));
+            
+            // Atualizar contador de notificações
+            loadNotifications();
+        });
+        
+        // Carregar notificações
+        function loadNotifications() {
+            const userNotifications = notifications.filter(n => n.userId === currentUser.id);
+            const unreadCount = userNotifications.filter(n => !n.read).length;
+            
+            notificationCount.textContent = unreadCount;
+            notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
+            
+            const notificationsList = document.querySelector('.notifications-list');
+            notificationsList.innerHTML = '';
+            
+            if (userNotifications.length === 0) {
+                notificationsList.innerHTML = '<p style="text-align: center; color: #999;">Nenhuma notificação</p>';
+                return;
+            }
+            
+            userNotifications.forEach(notification => {
+                const notificationItem = document.createElement('div');
+                notificationItem.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                notificationItem.innerHTML = `
+                    <h4>${notification.title}</h4>
+                    <p>${notification.message}</p>
+                    <small>${formatDate(notification.date)}</small>
+                `;
+                
+                notificationItem.addEventListener('click', () => {
+                    notification.read = true;
+                    localStorage.setItem('servicosExpressNotifications', JSON.stringify(notifications));
+                    loadNotifications();
+                });
+                
+                notificationsList.appendChild(notificationItem);
+            });
+        }
+        
+        // Carregar transações
+        function loadTransactions() {
+            const userTransactions = transactions.filter(t => t.userId === currentUser.id || t.userId === 'platform');
+            const transactionsList = document.querySelector('.transaction-list');
+            transactionsList.innerHTML = '';
+            
+            if (userTransactions.length === 0) {
+                transactionsList.innerHTML = '<p style="text-align: center; color: #999;">Nenhuma transação</p>';
+                return;
+            }
+            
+            userTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            userTransactions.forEach(transaction => {
+                const transactionItem = document.createElement('div');
+                transactionItem.className = 'transaction-item';
+                
+                const amountClass = transaction.type === 'credit' ? 'positive' : 'negative';
+                const amountSign = transaction.type === 'credit' ? '+' : '-';
+                
+                transactionItem.innerHTML = `
+                    <div class="transaction-details">
+                        <div>${transaction.description}</div>
+                        <div class="text-muted">${formatDate(transaction.date)}</div>
+                    </div>
+                    <div class="transaction-amount ${amountClass}">${amountSign} R$ ${transaction.amount.toFixed(2)}</div>
+                `;
+                
+                transactionsList.appendChild(transactionItem);
+            });
+        }
+        
+        // Publicar novo serviço
+        document.getElementById('publish-service-btn').addEventListener('click', () => {
+            const title = document.getElementById('service-title').value.trim();
+            const description = document.getElementById('service-description').value.trim();
+            const date = document.getElementById('service-date').value;
+            const location = document.getElementById('service-location').value.trim();
+            const value = parseFloat(document.getElementById('service-value').value);
+            const category = document.querySelector('.service-type-btn.active').getAttribute('data-type');
+            
+            if (!title || !description || !date || !location || !value) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            if (value < 10) {
+                alert('O valor do serviço deve ser pelo menos R$ 10,00.');
+                return;
+            }
+            
+            const newService = {
+                id: Date.now().toString(),
+                title,
+                description,
+                category,
+                date,
+                location,
+                value,
+                clientId: currentUser.id,
+                providerId: null,
+                status: 'available',
+                createdAt: new Date().toISOString()
+            };
+            
+            services.push(newService);
+            localStorage.setItem('servicosExpressServices', JSON.stringify(services));
+            
+            alert('Serviço publicado com sucesso!');
+            document.getElementById('request-service-modal').style.display = 'none';
+            loadServices();
+        });
+        
+        // Adicionar fundos
+        document.getElementById('confirm-payment-btn').addEventListener('click', () => {
+            const amount = parseFloat(document.getElementById('amount').value);
+            
+            if (!amount || amount < 5) {
+                alert('Por favor, insira um valor válido (mínimo R$ 5,00).');
+                return;
+            }
+            
+            currentUser.balance += amount;
+            localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+            localStorage.setItem('servicosExpressCurrentUser', JSON.stringify(currentUser));
+            
+            // Registrar transação
+            const transaction = {
+                id: Date.now().toString(),
+                userId: currentUser.id,
+                type: 'deposit',
+                amount: amount,
+                description: 'Depósito na carteira',
+                date: new Date().toISOString(),
+                serviceId: null
+            };
+            
+            transactions.push(transaction);
+            localStorage.setItem('servicosExpressTransactions', JSON.stringify(transactions));
+            
+            userBalance.textContent = `R$ ${currentUser.balance.toFixed(2)}`;
+            
+            alert(`R$ ${amount.toFixed(2)} adicionados à sua carteira com sucesso!`);
+            document.getElementById('add-funds-modal').style.display = 'none';
+        });
+        
+        // Solicitar saque
+        document.getElementById('confirm-withdraw-btn').addEventListener('click', () => {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const method = document.getElementById('withdraw-method').value;
+            
+            if (!amount || amount < 10) {
+                alert('Por favor, insira um valor válido (mínimo R$ 10,00).');
+                return;
+            }
+            
+            if (amount > currentUser.balance) {
+                alert('Saldo insuficiente para realizar o saque.');
+                return;
+            }
+            
+            currentUser.balance -= amount;
+            localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+            localStorage.setItem('servicosExpressCurrentUser', JSON.stringify(currentUser));
+            
+            // Registrar transação
+            const transaction = {
+                id: Date.now().toString(),
+                userId: currentUser.id,
+                type: 'withdraw',
+                amount: amount,
+                description: `Saque via ${method === 'pix' ? 'PIX' : 'Conta Bancária'}`,
+                date: new Date().toISOString(),
+                serviceId: null
+            };
+            
+            transactions.push(transaction);
+            localStorage.setItem('servicosExpressTransactions', JSON.stringify(transactions));
+            
+            userBalance.textContent = `R$ ${currentUser.balance.toFixed(2)}`;
+            
+            alert(`Saque de R$ ${amount.toFixed(2)} solicitado com sucesso! O valor será transferido em até 2 dias úteis.`);
+            document.getElementById('withdraw-modal').style.display = 'none';
+        });
+        
+        // Alternar entre métodos de pagamento
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', () => {
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+                method.classList.add('active');
+                
+                const methodType = method.getAttribute('data-method');
+                
+                if (methodType === 'pix') {
+                    document.getElementById('pix-payment').style.display = 'block';
+                    document.getElementById('card-payment').style.display = 'none';
+                } else {
+                    document.getElementById('pix-payment').style.display = 'none';
+                    document.getElementById('card-payment').style.display = 'block';
+                }
+            });
+        });
+        
+        // Alternar entre métodos de saque
+        document.getElementById('withdraw-method').addEventListener('change', function() {
+            if (this.value === 'pix') {
+                document.getElementById('pix-withdrawal').style.display = 'block';
+                document.getElementById('bank-withdrawal').style.display = 'none';
+            } else {
+                document.getElementById('pix-withdrawal').style.display = 'none';
+                document.getElementById('bank-withdrawal').style.display = 'block';
+            }
+        });
+        
+        // Copiar código PIX
+        document.getElementById('copy-pix-btn').addEventListener('click', () => {
+            const pixCode = document.getElementById('pix-code').textContent;
+            navigator.clipboard.writeText(pixCode).then(() => {
+                alert('Código PIX copiado para a área de transferência!');
+            });
+        });
+        
+        // Alternar abas principais
+        document.querySelectorAll('#main-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('#main-tabs .tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                loadServices();
+            });
+        });
+        
+        // Abrir modais
+        document.getElementById('add-funds-btn').addEventListener('click', () => {
+            document.getElementById('add-funds-modal').style.display = 'flex';
+        });
+        
+        document.getElementById('withdraw-btn').addEventListener('click', () => {
+            document.getElementById('withdraw-modal').style.display = 'flex';
+        });
+        
+        document.getElementById('notifications-btn').addEventListener('click', () => {
+            document.getElementById('notifications-modal').style.display = 'flex';
+        });
+        
+        document.getElementById('request-service-btn').addEventListener('click', () => {
+            document.getElementById('request-service-modal').style.display = 'flex';
+        });
+        
+        // Fechar modais
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            });
+        });
+        
+        // Fechar modal clicando fora dele
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+        
+        // Sistema de avaliação por estrelas
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', () => {
+                const rating = parseInt(star.getAttribute('data-rating'));
+                
+                document.querySelectorAll('.star').forEach(s => {
+                    const starRating = parseInt(s.getAttribute('data-rating'));
+                    if (starRating <= rating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+            });
+        });
+        
+        // Enviar avaliação
+        document.getElementById('submit-review-btn').addEventListener('click', () => {
+            const activeStars = document.querySelectorAll('.star.active');
+            const rating = activeStars.length;
+            const comment = document.getElementById('review-comment').value.trim();
+            
+            if (rating === 0) {
+                alert('Por favor, selecione uma avaliação com estrelas.');
+                return;
+            }
+            
+            const newReview = {
+                id: Date.now().toString(),
+                userId: currentUser.id,
+                serviceId: currentService.id,
+                rating: rating,
+                comment: comment,
+                date: new Date().toISOString()
+            };
+            
+            reviews.push(newReview);
+            localStorage.setItem('servicosExpressReviews', JSON.stringify(reviews));
+            
+            // Atualizar avaliação do prestador (simulação)
+            const provider = users.find(u => u.id === currentService.providerId);
+            const providerReviews = reviews.filter(r => {
+                const service = services.find(s => s.id === r.serviceId);
+                return service && service.providerId === provider.id;
+            });
+            
+            if (providerReviews.length > 0) {
+                const totalRating = providerReviews.reduce((sum, review) => sum + review.rating, 0);
+                provider.rating = totalRating / providerReviews.length;
+                
+                const providerIndex = users.findIndex(u => u.id === provider.id);
+                if (providerIndex !== -1) {
+                    users[providerIndex] = provider;
+                    localStorage.setItem('servicosExpressUsers', JSON.stringify(users));
+                }
+            }
+            
+            alert('Avaliação enviada com sucesso!');
+            document.getElementById('review-modal').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
